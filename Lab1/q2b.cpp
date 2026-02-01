@@ -6,7 +6,7 @@ static double A[N][N], B[N][N], C[N][N];
 
 int main()
 {
-    int num_threads = 1; // <<< CHANGE THIS
+    int num_threads = 1;
 
     omp_set_num_threads(num_threads);
 

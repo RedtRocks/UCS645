@@ -18,7 +18,8 @@ const double DX = 0.1;
 const double DY = 0.1;
 const double DT = 0.0001;
 
-struct PerformanceMetrics {
+struct PerformanceMetrics
+{
     int threads;
     string schedule;
     double time;
@@ -30,55 +31,68 @@ struct PerformanceMetrics {
     long long cache_misses;
 };
 
-void initialize_grid(vector<vector<double>> &T, int nx, int ny) {
+void initialize_grid(vector<vector<double>> &T, int nx, int ny)
+{
     T.assign(nx, vector<double>(ny, 20.0));
 
-    for (int j = 0; j < ny; j++) T[0][j] = 100.0;
-    for (int j = 0; j < ny; j++) T[nx-1][j] = 0.0;
-    for (int i = 0; i < nx; i++) {
+    for (int j = 0; j < ny; j++)
+        T[0][j] = 100.0;
+    for (int j = 0; j < ny; j++)
+        T[nx - 1][j] = 0.0;
+    for (int i = 0; i < nx; i++)
+    {
         T[i][0] = 20.0;
-        T[i][ny-1] = 20.0;
+        T[i][ny - 1] = 20.0;
     }
 
     int cx = nx / 2, cy = ny / 2, radius = min(nx, ny) / 10;
-    for (int i = cx - radius; i <= cx + radius; i++) {
-        for (int j = cy - radius; j <= cy + radius; j++) {
-            if (i > 0 && i < nx-1 && j > 0 && j < ny-1) {
-                double dist = sqrt((i-cx)*(i-cx) + (j-cy)*(j-cy));
-                if (dist <= radius) T[i][j] = 80.0;
+    for (int i = cx - radius; i <= cx + radius; i++)
+    {
+        for (int j = cy - radius; j <= cy + radius; j++)
+        {
+            if (i > 0 && i < nx - 1 && j > 0 && j < ny - 1)
+            {
+                double dist = sqrt((i - cx) * (i - cx) + (j - cy) * (j - cy));
+                if (dist <= radius)
+                    T[i][j] = 80.0;
             }
         }
     }
 }
 
-double simulate_static(int nx, int ny, int timesteps, int num_threads) {
+double simulate_static(int nx, int ny, int timesteps, int num_threads)
+{
     vector<vector<double>> temperature(nx, vector<double>(ny));
     vector<vector<double>> next_temperature(nx, vector<double>(ny));
     initialize_grid(temperature, nx, ny);
 
     double start = omp_get_wtime();
 
-    for (int t = 0; t < timesteps; t++) {
-        #pragma omp parallel for num_threads(num_threads) schedule(static) collapse(2)
-        for (int i = 1; i < nx - 1; i++) {
-            for (int j = 1; j < ny - 1; j++) {
-                double laplacian = (temperature[i+1][j] + temperature[i-1][j] - 4*temperature[i][j]
-                                  + temperature[i][j+1] + temperature[i][j-1]) / (DX * DY);
+    for (int t = 0; t < timesteps; t++)
+    {
+#pragma omp parallel for num_threads(num_threads) schedule(static) collapse(2)
+        for (int i = 1; i < nx - 1; i++)
+        {
+            for (int j = 1; j < ny - 1; j++)
+            {
+                double laplacian = (temperature[i + 1][j] + temperature[i - 1][j] - 4 * temperature[i][j] + temperature[i][j + 1] + temperature[i][j - 1]) / (DX * DY);
                 next_temperature[i][j] = temperature[i][j] + ALPHA * DT * laplacian;
             }
         }
 
-        #pragma omp parallel num_threads(num_threads)
+#pragma omp parallel num_threads(num_threads)
         {
-            #pragma omp for
-            for (int j = 0; j < ny; j++) {
+#pragma omp for
+            for (int j = 0; j < ny; j++)
+            {
                 next_temperature[0][j] = temperature[0][j];
-                next_temperature[nx-1][j] = temperature[nx-1][j];
+                next_temperature[nx - 1][j] = temperature[nx - 1][j];
             }
-            #pragma omp for
-            for (int i = 0; i < nx; i++) {
+#pragma omp for
+            for (int i = 0; i < nx; i++)
+            {
                 next_temperature[i][0] = temperature[i][0];
-                next_temperature[i][ny-1] = temperature[i][ny-1];
+                next_temperature[i][ny - 1] = temperature[i][ny - 1];
             }
         }
 
@@ -88,34 +102,39 @@ double simulate_static(int nx, int ny, int timesteps, int num_threads) {
     return omp_get_wtime() - start;
 }
 
-double simulate_dynamic(int nx, int ny, int timesteps, int num_threads) {
+double simulate_dynamic(int nx, int ny, int timesteps, int num_threads)
+{
     vector<vector<double>> temperature(nx, vector<double>(ny));
     vector<vector<double>> next_temperature(nx, vector<double>(ny));
     initialize_grid(temperature, nx, ny);
 
     double start = omp_get_wtime();
 
-    for (int t = 0; t < timesteps; t++) {
-        #pragma omp parallel for num_threads(num_threads) schedule(dynamic, 10) collapse(2)
-        for (int i = 1; i < nx - 1; i++) {
-            for (int j = 1; j < ny - 1; j++) {
-                double laplacian = (temperature[i+1][j] + temperature[i-1][j] - 4*temperature[i][j]
-                                  + temperature[i][j+1] + temperature[i][j-1]) / (DX * DY);
+    for (int t = 0; t < timesteps; t++)
+    {
+#pragma omp parallel for num_threads(num_threads) schedule(dynamic, 10) collapse(2)
+        for (int i = 1; i < nx - 1; i++)
+        {
+            for (int j = 1; j < ny - 1; j++)
+            {
+                double laplacian = (temperature[i + 1][j] + temperature[i - 1][j] - 4 * temperature[i][j] + temperature[i][j + 1] + temperature[i][j - 1]) / (DX * DY);
                 next_temperature[i][j] = temperature[i][j] + ALPHA * DT * laplacian;
             }
         }
 
-        #pragma omp parallel num_threads(num_threads)
+#pragma omp parallel num_threads(num_threads)
         {
-            #pragma omp for
-            for (int j = 0; j < ny; j++) {
+#pragma omp for
+            for (int j = 0; j < ny; j++)
+            {
                 next_temperature[0][j] = temperature[0][j];
-                next_temperature[nx-1][j] = temperature[nx-1][j];
+                next_temperature[nx - 1][j] = temperature[nx - 1][j];
             }
-            #pragma omp for
-            for (int i = 0; i < nx; i++) {
+#pragma omp for
+            for (int i = 0; i < nx; i++)
+            {
                 next_temperature[i][0] = temperature[i][0];
-                next_temperature[i][ny-1] = temperature[i][ny-1];
+                next_temperature[i][ny - 1] = temperature[i][ny - 1];
             }
         }
 
@@ -125,34 +144,39 @@ double simulate_dynamic(int nx, int ny, int timesteps, int num_threads) {
     return omp_get_wtime() - start;
 }
 
-double simulate_guided(int nx, int ny, int timesteps, int num_threads) {
+double simulate_guided(int nx, int ny, int timesteps, int num_threads)
+{
     vector<vector<double>> temperature(nx, vector<double>(ny));
     vector<vector<double>> next_temperature(nx, vector<double>(ny));
     initialize_grid(temperature, nx, ny);
 
     double start = omp_get_wtime();
 
-    for (int t = 0; t < timesteps; t++) {
-        #pragma omp parallel for num_threads(num_threads) schedule(guided) collapse(2)
-        for (int i = 1; i < nx - 1; i++) {
-            for (int j = 1; j < ny - 1; j++) {
-                double laplacian = (temperature[i+1][j] + temperature[i-1][j] - 4*temperature[i][j]
-                                  + temperature[i][j+1] + temperature[i][j-1]) / (DX * DY);
+    for (int t = 0; t < timesteps; t++)
+    {
+#pragma omp parallel for num_threads(num_threads) schedule(guided) collapse(2)
+        for (int i = 1; i < nx - 1; i++)
+        {
+            for (int j = 1; j < ny - 1; j++)
+            {
+                double laplacian = (temperature[i + 1][j] + temperature[i - 1][j] - 4 * temperature[i][j] + temperature[i][j + 1] + temperature[i][j - 1]) / (DX * DY);
                 next_temperature[i][j] = temperature[i][j] + ALPHA * DT * laplacian;
             }
         }
 
-        #pragma omp parallel num_threads(num_threads)
+#pragma omp parallel num_threads(num_threads)
         {
-            #pragma omp for
-            for (int j = 0; j < ny; j++) {
+#pragma omp for
+            for (int j = 0; j < ny; j++)
+            {
                 next_temperature[0][j] = temperature[0][j];
-                next_temperature[nx-1][j] = temperature[nx-1][j];
+                next_temperature[nx - 1][j] = temperature[nx - 1][j];
             }
-            #pragma omp for
-            for (int i = 0; i < nx; i++) {
+#pragma omp for
+            for (int i = 0; i < nx; i++)
+            {
                 next_temperature[i][0] = temperature[i][0];
-                next_temperature[i][ny-1] = temperature[i][ny-1];
+                next_temperature[i][ny - 1] = temperature[i][ny - 1];
             }
         }
 
@@ -162,41 +186,48 @@ double simulate_guided(int nx, int ny, int timesteps, int num_threads) {
     return omp_get_wtime() - start;
 }
 
-double simulate_cache_blocked(int nx, int ny, int timesteps, int num_threads, int tile_size) {
+double simulate_cache_blocked(int nx, int ny, int timesteps, int num_threads, int tile_size)
+{
     vector<vector<double>> temperature(nx, vector<double>(ny));
     vector<vector<double>> next_temperature(nx, vector<double>(ny));
     initialize_grid(temperature, nx, ny);
 
     double start = omp_get_wtime();
 
-    for (int t = 0; t < timesteps; t++) {
-        #pragma omp parallel for num_threads(num_threads) schedule(dynamic) collapse(2)
-        for (int ti = 1; ti < nx - 1; ti += tile_size) {
-            for (int tj = 1; tj < ny - 1; tj += tile_size) {
+    for (int t = 0; t < timesteps; t++)
+    {
+#pragma omp parallel for num_threads(num_threads) schedule(dynamic) collapse(2)
+        for (int ti = 1; ti < nx - 1; ti += tile_size)
+        {
+            for (int tj = 1; tj < ny - 1; tj += tile_size)
+            {
                 int i_end = min(ti + tile_size, nx - 1);
                 int j_end = min(tj + tile_size, ny - 1);
 
-                for (int i = ti; i < i_end; i++) {
-                    for (int j = tj; j < j_end; j++) {
-                        double laplacian = (temperature[i+1][j] + temperature[i-1][j] - 4*temperature[i][j]
-                                          + temperature[i][j+1] + temperature[i][j-1]) / (DX * DY);
+                for (int i = ti; i < i_end; i++)
+                {
+                    for (int j = tj; j < j_end; j++)
+                    {
+                        double laplacian = (temperature[i + 1][j] + temperature[i - 1][j] - 4 * temperature[i][j] + temperature[i][j + 1] + temperature[i][j - 1]) / (DX * DY);
                         next_temperature[i][j] = temperature[i][j] + ALPHA * DT * laplacian;
                     }
                 }
             }
         }
 
-        #pragma omp parallel num_threads(num_threads)
+#pragma omp parallel num_threads(num_threads)
         {
-            #pragma omp for
-            for (int j = 0; j < ny; j++) {
+#pragma omp for
+            for (int j = 0; j < ny; j++)
+            {
                 next_temperature[0][j] = temperature[0][j];
-                next_temperature[nx-1][j] = temperature[nx-1][j];
+                next_temperature[nx - 1][j] = temperature[nx - 1][j];
             }
-            #pragma omp for
-            for (int i = 0; i < nx; i++) {
+#pragma omp for
+            for (int i = 0; i < nx; i++)
+            {
                 next_temperature[i][0] = temperature[i][0];
-                next_temperature[i][ny-1] = temperature[i][ny-1];
+                next_temperature[i][ny - 1] = temperature[i][ny - 1];
             }
         }
 
@@ -206,24 +237,30 @@ double simulate_cache_blocked(int nx, int ny, int timesteps, int num_threads, in
     return omp_get_wtime() - start;
 }
 
-void estimate_metrics(PerformanceMetrics &metrics, int nx, int ny, int timesteps) {
+void estimate_metrics(PerformanceMetrics &metrics, int nx, int ny, int timesteps)
+{
     long long cells = (long long)(nx - 2) * (ny - 2) * timesteps;
-    metrics.instructions = cells * 25;  // ~25 instructions per cell update
+    metrics.instructions = cells * 25; // ~25 instructions per cell update
 
     double base_cpi = 0.28;
-    if (metrics.schedule == "Dynamic") base_cpi = 0.30;
-    if (metrics.schedule == "Guided") base_cpi = 0.27;
-    if (metrics.schedule == "Cache-Blocked") base_cpi = 0.26;
+    if (metrics.schedule == "Dynamic")
+        base_cpi = 0.30;
+    if (metrics.schedule == "Guided")
+        base_cpi = 0.27;
+    if (metrics.schedule == "Cache-Blocked")
+        base_cpi = 0.26;
 
     metrics.cycles = (long long)(metrics.instructions * base_cpi);
-    metrics.cache_refs = cells * 5;  // Multiple memory accesses per cell
+    metrics.cache_refs = cells * 5; // Multiple memory accesses per cell
 
-    double miss_rate = 0.025;  // Low miss rate for stencil computation
-    if (metrics.schedule == "Cache-Blocked") miss_rate = 0.016;
+    double miss_rate = 0.025; // Low miss rate for stencil computation
+    if (metrics.schedule == "Cache-Blocked")
+        miss_rate = 0.016;
     metrics.cache_misses = (long long)(metrics.cache_refs * miss_rate);
 }
 
-void print_perf_stats(const PerformanceMetrics &metrics) {
+void print_perf_stats(const PerformanceMetrics &metrics)
+{
     cout << "\nPerformance counter stats for '" << metrics.schedule << "' scheduling:\n\n";
 
     cout << "  " << setw(15) << metrics.cycles << "  cpu_atom/cycles/\n";
@@ -238,7 +275,8 @@ void print_perf_stats(const PerformanceMetrics &metrics) {
     cout << "\n  " << fixed << setprecision(6) << metrics.time << " seconds time elapsed\n";
 }
 
-void print_vtune_table() {
+void print_vtune_table()
+{
     cout << "\n=== VTune-Style Performance Metrics ===\n\n";
     cout << "Metric                        | Observed Value      | Interpretation\n";
     cout << "---------------------------------------------------------------------------------\n";
@@ -257,11 +295,14 @@ void print_vtune_table() {
 
 void export_to_csv(const vector<vector<PerformanceMetrics>> &all_schedules,
                    const vector<string> &schedule_names,
-                   const string &filename) {
+                   const string &filename)
+{
     ofstream csv(filename);
     csv << "Schedule,Threads,Time(s),Speedup,Efficiency(%)\n";
-    for (size_t s = 0; s < all_schedules.size(); s++) {
-        for (const auto &m : all_schedules[s]) {
+    for (size_t s = 0; s < all_schedules.size(); s++)
+    {
+        for (const auto &m : all_schedules[s])
+        {
             csv << schedule_names[s] << "," << m.threads << ","
                 << fixed << setprecision(6) << m.time << ","
                 << setprecision(2) << m.speedup << "," << m.efficiency << "\n";
@@ -271,7 +312,8 @@ void export_to_csv(const vector<vector<PerformanceMetrics>> &all_schedules,
     cout << "\nData exported to " << filename << " for graphing\n";
 }
 
-int main() {
+int main()
+{
     const int nx = 512;
     const int ny = 512;
     const int timesteps = 100;
@@ -292,32 +334,42 @@ int main() {
     vector<vector<PerformanceMetrics>> all_schedules(4);
 
     // Test each scheduling strategy
-    for (int sched_idx = 0; sched_idx < 4; sched_idx++) {
+    for (int sched_idx = 0; sched_idx < 4; sched_idx++)
+    {
         cout << "\n=> " << schedule_names[sched_idx].substr(0, schedule_names[sched_idx].find("_")) << " SCHEDULING\n\n";
         cout << "Threads    Time (s)        Speedup    Efficiency\n";
         cout << "------------------------------------------------------\n";
 
         double t_serial = 0.0;
 
-        for (int threads : thread_counts) {
-            if (threads > omp_get_max_threads()) break;
+        for (int threads : thread_counts)
+        {
+            if (threads > omp_get_max_threads())
+                break;
 
             double time;
-            if (sched_idx == 0) time = simulate_static(nx, ny, timesteps, threads);
-            else if (sched_idx == 1) time = simulate_dynamic(nx, ny, timesteps, threads);
-            else if (sched_idx == 2) time = simulate_guided(nx, ny, timesteps, threads);
-            else time = simulate_cache_blocked(nx, ny, timesteps, threads, tile_size);
+            if (sched_idx == 0)
+                time = simulate_static(nx, ny, timesteps, threads);
+            else if (sched_idx == 1)
+                time = simulate_dynamic(nx, ny, timesteps, threads);
+            else if (sched_idx == 2)
+                time = simulate_guided(nx, ny, timesteps, threads);
+            else
+                time = simulate_cache_blocked(nx, ny, timesteps, threads, tile_size);
 
             PerformanceMetrics metrics;
             metrics.threads = threads;
             metrics.time = time;
             metrics.schedule = schedule_names[sched_idx];
 
-            if (threads == 1) {
+            if (threads == 1)
+            {
                 t_serial = time;
                 metrics.speedup = 1.0;
                 metrics.efficiency = 100.0;
-            } else {
+            }
+            else
+            {
                 metrics.speedup = t_serial / time;
                 metrics.efficiency = (metrics.speedup / threads) * 100.0;
             }
@@ -334,8 +386,9 @@ int main() {
 
     // Performance statistics
     cout << "\n\n=== EXECUTION & PERFORMANCE STATISTICS (perf stat) ===\n";
-    if (!all_schedules[2].empty()) {
-        print_perf_stats(all_schedules[2].back());  // Guided, 8 threads
+    if (!all_schedules[2].empty())
+    {
+        print_perf_stats(all_schedules[2].back()); // Guided, 8 threads
     }
 
     // VTune table

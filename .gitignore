@@ -1,2 +1,41 @@
 .vscode
 .Lab1/.vscode
+# ============================================================================
+# LAB3 - Vector Correlation Assignment
+# ============================================================================
+
+# === Lab3 Compiled Binaries ===
+Lab3/correlate
+Lab3/correlate.exe
+Lab3/*.out
+
+# === Lab3 Object Files ===
+Lab3/*.o
+Lab3/*.obj
+
+# === Lab3 Generated Performance Data ===
+Lab3/performance_data/
+Lab3/performance_*.txt
+Lab3/detailed_execution.log
+Lab3/QUICK_SUMMARY.txt
+
+# === Lab3 CSV Exports ===
+Lab3/*.csv
+
+# === Lab3 Generated Graphs ===
+Lab3/*.png
+Lab3/*.pdf
+
+# === Lab3 Temporary Files ===
+Lab3/*.tmp
+Lab3/*.bak
+Lab3/*~
+
+# === Lab3 IDE/Editor Files ===
+Lab3/.vscode/
+Lab3/.idea/
+Lab3/*.sublime-project
+
+# === Lab3 Build Artifacts ===
+Lab3/build/
+Lab3/dist/

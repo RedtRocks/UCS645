@@ -1,7 +1,8 @@
 #include <mpi.h>
 #include <iostream>
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
     MPI_Init(&argc, &argv);
 
     int rank = 0;
@@ -14,13 +15,16 @@ int main(int argc, char** argv) {
 
     int value = 0;
 
-    if (rank == 0) {
+    if (rank == 0)
+    {
         value = 100;
         std::cout << "Process 0 starts ring with value " << value << std::endl;
         MPI_Send(&value, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
         MPI_Recv(&value, 1, MPI_INT, prev, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         std::cout << "Process 0 received final value " << value << std::endl;
-    } else {
+    }
+    else
+    {
         MPI_Recv(&value, 1, MPI_INT, prev, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         std::cout << "Process " << rank << " received " << value << std::endl;
         value += rank;

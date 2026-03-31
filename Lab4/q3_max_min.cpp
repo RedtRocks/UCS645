@@ -5,7 +5,8 @@
 #include <iostream>
 #include <vector>
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
     MPI_Init(&argc, &argv);
 
     int rank = 0;
@@ -17,7 +18,8 @@ int main(int argc, char** argv) {
 
     const int kCount = 10;
     std::vector<int> local_values(kCount);
-    for (int i = 0; i < kCount; ++i) {
+    for (int i = 0; i < kCount; ++i)
+    {
         local_values[i] = std::rand() % 1001;
     }
 
@@ -38,12 +40,14 @@ int main(int argc, char** argv) {
     MPI_Reduce(min_pair, global_min_pair, 1, MPI_2INT, MPI_MINLOC, 0, MPI_COMM_WORLD);
 
     std::cout << "Process " << rank << " values:";
-    for (int v : local_values) {
+    for (int v : local_values)
+    {
         std::cout << ' ' << v;
     }
     std::cout << " | local_min=" << local_min << " local_max=" << local_max << std::endl;
 
-    if (rank == 0) {
+    if (rank == 0)
+    {
         std::cout << "Global maximum = " << global_max
                   << " (from process " << global_max_pair[1] << ")" << std::endl;
         std::cout << "Global minimum = " << global_min

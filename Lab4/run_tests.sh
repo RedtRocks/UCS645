@@ -8,6 +8,7 @@ set -e
 OUTPUT_FILE="timing_results.csv"
 PROGRAMS=("q1_ring_comm" "q2_array_sum" "q3_max_min" "q4_dot_product")
 PROC_COUNTS=(1 2 4 8)
+TIMEOUT_SECONDS=30
 
 echo "====================================="
 echo "Lab4 MPI Performance Testing"
@@ -25,6 +26,12 @@ done
 echo "Building CSV header..."
 echo "Program,Processes,Time_Seconds,Speedup,Efficiency" > "$OUTPUT_FILE"
 
+run_mpi_timed() {
+    local np=$1
+    local prog=$2
+    timeout "$TIMEOUT_SECONDS" mpirun -np "$np" "./$prog" > /dev/null 2>&1
+}
+
 # Baseline times for speedup calculation (single process)
 declare -A baseline_times
 
@@ -33,7 +40,10 @@ echo "Running baseline tests (1 process)..."
 for prog in "${PROGRAMS[@]}"; do
     echo -n "  $prog ... "
     start_time=$(date +%s.%N)
-    mpirun -np 1 "./$prog" > /dev/null 2>&1
+    if ! run_mpi_timed 1 "$prog"; then
+        echo "failed (timeout or runtime error)"
+        exit 1
+    fi
     end_time=$(date +%s.%N)
     exec_time=$(echo "$end_time - $start_time" | bc)
     baseline_times[$prog]=$exec_time
@@ -54,7 +64,10 @@ for prog in "${PROGRAMS[@]}"; do
         
         echo -n "    np=$np ... "
         start_time=$(date +%s.%N)
-        mpirun -np $np "./$prog" > /dev/null 2>&1
+        if ! run_mpi_timed "$np" "$prog"; then
+            echo "failed (timeout or runtime error)"
+            exit 1
+        fi
         end_time=$(date +%s.%N)
         exec_time=$(echo "$end_time - $start_time" | bc)
         speedup=$(echo "scale=3; $baseline / $exec_time" | bc)

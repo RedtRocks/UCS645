@@ -39,16 +39,20 @@ mpirun -np 4 ./q4_dot_product
 To generate timing comparisons across different processor counts:
 
 1. **Run all tests** (tests 1, 2, 4, and 8 processes)
+
    ```bash
    chmod +x run_tests.sh
    ./run_tests.sh
    ```
+
    This creates `timing_results.csv` with execution times, speedup, and efficiency.
 
 2. **Generate graphs and tables**
+
    ```bash
    python3 analyze_results.py
    ```
+
    Generates:
    - `execution_times.png` — Time vs processor count
    - `speedup.png` — Speedup vs processor count (with ideal line)

@@ -1,0 +1,162 @@
+# ============================================================================
+# .gitignore - Assignment 3: Vector Correlation
+# Excludes compiled binaries, object files, logs, and generated data
+# ============================================================================
+
+# === COMPILED BINARIES ===
+correlate
+correlate.exe
+*.out
+
+# === OBJECT FILES ===
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+
+# === PERFORMANCE DATA (Generated during testing) ===
+performance_data/
+*.csv
+*.txt.log
+performance_results.txt
+detailed_execution.log
+QUICK_SUMMARY.txt
+
+# === TEMPORARY FILES ===
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# === IDE AND EDITOR FILES ===
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+*.code-workspace
+
+# === BUILD ARTIFACTS ===
+*.dSYM/
+*.su
+*.gch
+*.pch
+CMakeFiles/
+cmake_install.cmake
+Makefile.user
+*.pro.user
+
+# === OPERATING SYSTEM FILES ===
+Thumbs.db
+.thumbs.db
+.Thumbs.db
+.directory
+Desktop.ini
+
+# === PYTHON CACHE ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# === GENERATED GRAPHS AND VISUALIZATIONS ===
+*.png
+*.pdf
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# === ANALYSIS REPORTS (can be regenerated) ===
+analysis_report.txt
+performance_graphs.png
+performance_summary.csv
+performance_data.csv
+
+# === OS-SPECIFIC ===
+.env
+.env.local
+*.swp
+*.swo
+.DS_Store
+._*
+
+# === VirtualBox/VM RELATED ===
+.VirtualBox
+VBoxSVC.log
+
+# === DOCKER (if used) ===
+.dockerignore
+docker-compose.override.yml
+
+# === GIT LFS (if used) ===
+.gitattributes
+
+# === TEMPORARY BUILD DIRECTORIES ===
+tmp*/
+tmpclaude-*/
+temp/
+build/
+dist/
+
+# === EXECUTABLE SCRIPTS WITH NO SOURCE ===
+# Keep .sh files since they contain important setup, but exclude executables
+correlate
+!*.sh
+
+# === NOTES AND DRAFTS ===
+*.draft
+*.notes
+notes.txt
+draft_report.txt
+
+# === BACKUP FILES ===
+*.backup
+*.bkp
+*.orig
+*.rej
+
+# === COVERAGE AND PROFILING ===
+*.gcda
+*.gcno
+coverage.txt
+*.prof
+
+# === SIZE LIMIT (exclude very large files) ===
+# Uncomment if needed:
+# *.tar.gz
+# *.zip
+# *.7z
+
+# === WHITELIST (DO NOT IGNORE) ===
+# Make sure to keep essential files:
+# !main.cpp
+# !correlate.cpp
+# !correlate.h
+# !Makefile
+# !*.sh (shell scripts for automation)
+# !*.md (documentation)
+# !*.pdf (assignment spec)
+# !.gitignore (this file)
+

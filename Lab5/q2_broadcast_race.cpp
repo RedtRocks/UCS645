@@ -5,53 +5,67 @@
 #include <limits>
 #include <vector>
 
-namespace {
-constexpr long long kDefaultArraySize = 10000000LL;
+namespace
+{
+    constexpr long long kDefaultArraySize = 10000000LL;
 
-void fill_buffer(std::vector<double>& buffer, double seed) {
-    for (long long i = 0; i < static_cast<long long>(buffer.size()); ++i) {
-        buffer[static_cast<size_t>(i)] = seed + static_cast<double>(i) * 1e-6;
+    void fill_buffer(std::vector<double> &buffer, double seed)
+    {
+        for (long long i = 0; i < static_cast<long long>(buffer.size()); ++i)
+        {
+            buffer[static_cast<size_t>(i)] = seed + static_cast<double>(i) * 1e-6;
+        }
     }
-}
 
-bool validate_samples(const std::vector<double>& buffer, double seed) {
-    if (buffer.empty()) {
+    bool validate_samples(const std::vector<double> &buffer, double seed)
+    {
+        if (buffer.empty())
+        {
+            return true;
+        }
+
+        const long long n = static_cast<long long>(buffer.size());
+        const long long idx[3] = {0, n / 2, n - 1};
+
+        for (long long i : idx)
+        {
+            const double expected = seed + static_cast<double>(i) * 1e-6;
+            const double got = buffer[static_cast<size_t>(i)];
+            if (std::fabs(got - expected) > 1e-12)
+            {
+                return false;
+            }
+        }
         return true;
     }
 
-    const long long n = static_cast<long long>(buffer.size());
-    const long long idx[3] = {0, n / 2, n - 1};
+    void my_bcast_linear(double *data, int count, int root, MPI_Comm comm)
+    {
+        int rank = 0;
+        int size = 0;
+        MPI_Comm_rank(comm, &rank);
+        MPI_Comm_size(comm, &size);
 
-    for (long long i : idx) {
-        const double expected = seed + static_cast<double>(i) * 1e-6;
-        const double got = buffer[static_cast<size_t>(i)];
-        if (std::fabs(got - expected) > 1e-12) {
-            return false;
-        }
-    }
-    return true;
-}
-
-void my_bcast_linear(double* data, int count, int root, MPI_Comm comm) {
-    int rank = 0;
-    int size = 0;
-    MPI_Comm_rank(comm, &rank);
-    MPI_Comm_size(comm, &size);
-
-    if (rank == root) {
-        for (int dest = 0; dest < size; ++dest) {
-            if (dest == root) {
-                continue;
+        if (rank == root)
+        {
+            for (int dest = 0; dest < size; ++dest)
+            {
+                if (dest == root)
+                {
+                    continue;
+                }
+                MPI_Send(data, count, MPI_DOUBLE, dest, 100, comm);
             }
-            MPI_Send(data, count, MPI_DOUBLE, dest, 100, comm);
         }
-    } else {
-        MPI_Recv(data, count, MPI_DOUBLE, root, 100, comm, MPI_STATUS_IGNORE);
+        else
+        {
+            MPI_Recv(data, count, MPI_DOUBLE, root, 100, comm, MPI_STATUS_IGNORE);
+        }
     }
 }
-}
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
     MPI_Init(&argc, &argv);
 
     int rank = 0;
@@ -60,8 +74,10 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     const long long array_size = (argc >= 2) ? std::atoll(argv[1]) : kDefaultArraySize;
-    if (array_size <= 0 || array_size > std::numeric_limits<int>::max()) {
-        if (rank == 0) {
+    if (array_size <= 0 || array_size > std::numeric_limits<int>::max())
+    {
+        if (rank == 0)
+        {
             std::cerr << "Array size must be in range [1, INT_MAX]." << std::endl;
         }
         MPI_Abort(MPI_COMM_WORLD, 1);
@@ -69,7 +85,8 @@ int main(int argc, char** argv) {
 
     std::vector<double> data(static_cast<size_t>(array_size), 0.0);
 
-    if (rank == 0) {
+    if (rank == 0)
+    {
         fill_buffer(data, 1.0);
     }
 
@@ -83,7 +100,8 @@ int main(int argc, char** argv) {
     int my_ok_global = 0;
     MPI_Reduce(&my_ok_local, &my_ok_global, 1, MPI_INT, MPI_LAND, 0, MPI_COMM_WORLD);
 
-    if (rank == 0) {
+    if (rank == 0)
+    {
         fill_buffer(data, 3.0);
     }
 
@@ -102,7 +120,8 @@ int main(int argc, char** argv) {
     MPI_Reduce(&my_local_time, &my_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&mpi_local_time, &mpi_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-    if (rank == 0) {
+    if (rank == 0)
+    {
         const double ratio = my_time / mpi_time;
         std::cout << "Q2 Broadcast Race (array_size=" << array_size << ")\n";
         std::cout << "Validation MyBcast: " << (my_ok_global ? "PASS" : "FAIL") << "\n";
@@ -111,7 +130,7 @@ int main(int argc, char** argv) {
             << "RESULT_Q2 procs=" << size
             << " mybcast_time=" << my_time
             << " mpibcast_time=" << mpi_time
-                << " my_over_mpi=" << ratio
+            << " my_over_mpi=" << ratio
             << std::endl;
     }
 

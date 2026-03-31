@@ -5,18 +5,22 @@
 #include <iostream>
 #include <vector>
 
-namespace {
-constexpr int kVectorSize = 1 << 16;
+namespace
+{
+    constexpr int kVectorSize = 1 << 16;
 
-void init_vectors(std::vector<double>& x, std::vector<double>& y) {
-    for (int i = 0; i < kVectorSize; ++i) {
-        x[i] = 1.0 + static_cast<double>(i % 100);
-        y[i] = 2.0 + static_cast<double>(i % 50);
+    void init_vectors(std::vector<double> &x, std::vector<double> &y)
+    {
+        for (int i = 0; i < kVectorSize; ++i)
+        {
+            x[i] = 1.0 + static_cast<double>(i % 100);
+            y[i] = 2.0 + static_cast<double>(i % 50);
+        }
     }
 }
-}
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
     MPI_Init(&argc, &argv);
 
     int rank = 0;
@@ -32,7 +36,8 @@ int main(int argc, char** argv) {
     const int rem = kVectorSize % size;
 
     int offset = 0;
-    for (int i = 0; i < size; ++i) {
+    for (int i = 0; i < size; ++i)
+    {
         counts[i] = base + ((i < rem) ? 1 : 0);
         displs[i] = offset;
         offset += counts[i];
@@ -48,7 +53,8 @@ int main(int argc, char** argv) {
 
     double serial_time = 0.0;
 
-    if (rank == 0) {
+    if (rank == 0)
+    {
         x.resize(kVectorSize);
         y.resize(kVectorSize);
         x_serial.resize(kVectorSize);
@@ -57,7 +63,8 @@ int main(int argc, char** argv) {
         x_serial = x;
 
         const double t0 = MPI_Wtime();
-        for (int i = 0; i < kVectorSize; ++i) {
+        for (int i = 0; i < kVectorSize; ++i)
+        {
             x_serial[i] = a * x_serial[i] + y[i];
         }
         serial_time = MPI_Wtime() - t0;
@@ -77,8 +84,7 @@ int main(int argc, char** argv) {
         local_n,
         MPI_DOUBLE,
         0,
-        MPI_COMM_WORLD
-    );
+        MPI_COMM_WORLD);
 
     MPI_Scatterv(
         rank == 0 ? y.data() : nullptr,
@@ -89,10 +95,10 @@ int main(int argc, char** argv) {
         local_n,
         MPI_DOUBLE,
         0,
-        MPI_COMM_WORLD
-    );
+        MPI_COMM_WORLD);
 
-    for (int i = 0; i < local_n; ++i) {
+    for (int i = 0; i < local_n; ++i)
+    {
         local_x[i] = a * local_x[i] + local_y[i];
     }
 
@@ -105,8 +111,7 @@ int main(int argc, char** argv) {
         displs.data(),
         MPI_DOUBLE,
         0,
-        MPI_COMM_WORLD
-    );
+        MPI_COMM_WORLD);
 
     const double local_parallel_elapsed = MPI_Wtime() - p0;
     double parallel_time = 0.0;
@@ -117,16 +122,18 @@ int main(int argc, char** argv) {
         MPI_DOUBLE,
         MPI_MAX,
         0,
-        MPI_COMM_WORLD
-    );
+        MPI_COMM_WORLD);
 
-    if (rank == 0) {
+    if (rank == 0)
+    {
         double max_err = 0.0;
         bool ok = true;
-        for (int i = 0; i < kVectorSize; ++i) {
+        for (int i = 0; i < kVectorSize; ++i)
+        {
             const double err = std::fabs(x[i] - x_serial[i]);
             max_err = std::max(max_err, err);
-            if (err > 1e-9) {
+            if (err > 1e-9)
+            {
                 ok = false;
             }
         }
